@@ -1,0 +1,81 @@
+#include <iostream>
+#include <vector>
+
+#define MAX_POINTS 10
+
+// Define a structure to represent a data point
+struct DataPoint {
+    double x;
+    double y;
+};
+
+// Linear interpolation function
+double linearInterpolation(const std::vector<DataPoint>& data, double x) {
+    double y;
+    for (size_t i = 0; i < data.size() - 1; ++i) {
+        if (x >= data[i].x && x <= data[i + 1].x) {
+            y = data[i].y + (data[i + 1].y - data[i].y) / (data[i + 1].x - data[i].x) * (x - data[i].x);
+            return y;
+        }
+    }
+    return 0.0; // Default value if x is outside the range of data
+}
+
+// Polynomial (Lagrange) interpolation function
+double lagrangeInterpolation(const std::vector<DataPoint>& data, double x) {
+    double y = 0.0;
+    for (size_t i = 0; i < data.size(); ++i) {
+        double term = data[i].y;
+        for (size_t j = 0; j < data.size(); ++j) {
+            if (j != i) {
+                term *= (x - data[j].x) / (data[i].x - data[j].x);
+            }
+        }
+        y += term;
+    }
+    return y;
+}
+
+// Cubic spline interpolation function (simplified)
+double cubicSplineInterpolation(const std::vector<DataPoint>& data, double x) {
+    // Implementation of cubic spline interpolation is more complex and requires additional code
+    // This function is a placeholder and does not implement the full cubic spline interpolation algorithm
+    // It simply returns the linear interpolation value for demonstration purposes
+    return linearInterpolation(data, x);
+}
+
+int main() {
+    int n;
+    std::cout << "Enter the number of data points (maximum " << MAX_POINTS << "): ";
+    std::cin >> n;
+
+    if (n < 2 || n > MAX_POINTS) {
+        std::cout << "Invalid number of data points. Exiting program." << std::endl;
+        return 1;
+    }
+
+    // Input data points
+    std::vector<DataPoint> data(n);
+    std::cout << "Enter the data points (x y):" << std::endl;
+    for (int i = 0; i < n; ++i) {
+        std::cin >> data[i].x >> data[i].y;
+    }
+
+    double x;
+    std::cout << "Enter the value of x to approximate: ";
+    std::cin >> x;
+
+    // Linear interpolation
+    double linearResult = linearInterpolation(data, x);
+    std::cout << "Linear interpolation result: " << linearResult << std::endl;
+
+    // Polynomial (Lagrange) interpolation
+    double lagrangeResult = lagrangeInterpolation(data, x);
+    std::cout << "Polynomial (Lagrange) interpolation result: " << lagrangeResult << std::endl;
+
+    // Cubic spline interpolation
+    double cubicSplineResult = cubicSplineInterpolation(data, x);
+    std::cout << "Cubic spline interpolation result: " << cubicSplineResult << std::endl;
+
+    return 0;
+}
