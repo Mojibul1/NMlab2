@@ -1,0 +1,90 @@
+#include <iostream>
+#include <vector>
+#include <cmath>
+
+// Define a structure to represent a data point
+struct DataPoint {
+    double x;
+    double y;
+};
+
+// Define a structure to represent a cubic spline
+struct CubicSpline {
+    double a, b, c, d, x;
+};
+
+// Function to perform cubic spline interpolation
+std::vector<CubicSpline> cubicSplineInterpolation(const std::vector<DataPoint>& data) {
+    int n = data.size();
+    std::vector<double> h(n), alpha(n), l(n + 1), mu(n + 1), z(n + 1);
+    std::vector<CubicSpline> spline(n);
+
+    // Step 1: Compute h[i] = x[i+1] - x[i]
+    for (int i = 0; i < n - 1; ++i) {
+        h[i] = data[i + 1].x - data[i].x;
+    }
+
+    // Step 2: Compute alpha[i] = 3 * (f[i+1] - f[i]) / h[i] - 3 * (f[i] - f[i-1]) / h[i-1]
+    for (int i = 1; i < n - 1; ++i) {
+        alpha[i] = 3 * ((data[i + 1].y - data[i].y) / h[i] - (data[i].y - data[i - 1].y) / h[i - 1]);
+    }
+
+    // Step 3: Solve the tridiagonal linear system to find z[i]
+    l[0] = 1;
+    mu[0] = 0;
+    z[0] = 0;
+    for (int i = 1; i < n - 1; ++i) {
+        l[i] = 2 * (data[i + 1].x - data[i - 1].x) - h[i - 1] * mu[i - 1];
+        mu[i] = h[i] / l[i];
+        z[i] = (alpha[i] - h[i - 1] * z[i - 1]) / l[i];
+    }
+    l[n - 1] = 1;
+    z[n - 1] = 0;
+    spline[n - 1].c = 0;
+
+    // Step 4: Back substitution to find spline coefficients
+    for (int j = n - 2; j >= 0; --j) {
+        spline[j].c = z[j] - mu[j] * spline[j + 1].c;
+        spline[j].b = (data[j + 1].y - data[j].y) / h[j] - h[j] * (spline[j + 1].c + 2 * spline[j].c) / 3;
+        spline[j].d = (spline[j + 1].c - spline[j].c) / (3 * h[j]);
+        spline[j].a = data[j].y;
+        spline[j].x = data[j].x;
+    }
+    return spline;
+}
+
+// Function to approximate the functional value at a given x using cubic spline interpolation
+double interpolate(const std::vector<CubicSpline>& spline, double x) {
+    for (size_t i = 0; i < spline.size(); ++i) {
+        if (x >= spline[i].x && x <= spline[i + 1].x) {
+            double dx = x - spline[i].x;
+            return spline[i].a + spline[i].b * dx + spline[i].c * dx * dx + spline[i].d * dx * dx * dx;
+        }
+    }
+    return 0.0; // Default value if x is outside the range of data
+}
+
+int main() {
+    int n;
+    std::cout << "Enter the number of data points: ";
+    std::cin >> n;
+
+    // Input data points
+    std::vector<DataPoint> data(n);
+    std::cout << "Enter the data points (x y):" << std::endl;
+    for (int i = 0; i < n; ++i) {
+        std::cin >> data[i].x >> data[i].y;
+    }
+
+    // Perform cubic spline interpolation
+    std::vector<CubicSpline> spline = cubicSplineInterpolation(data);
+
+    // Approximate functional value at a given x
+    double x;
+    std::cout << "Enter the value of x to approximate: ";
+    std::cin >> x;
+    double interpolatedValue = interpolate(spline, x);
+    std::cout << "Functional value at x = " << x << " is " << interpolatedValue << std::endl;
+
+    return 0;
+}
